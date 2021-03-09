@@ -129,7 +129,7 @@ trait Metable
             return;
         }
 
-        return ($raw) ? $meta : $meta->meta_value;
+        return ($raw) ? $meta : $meta->{$this->getValueColumnName()};
     }
 
     protected function getMetaArray($keys, $raw = false)
