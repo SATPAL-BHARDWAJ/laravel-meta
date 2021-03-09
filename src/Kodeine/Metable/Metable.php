@@ -43,14 +43,14 @@ trait Metable
             // Make sure deletion marker is not set
             $this->metaData[$key]->markForDeletion(false);
 
-            $this->metaData[$key]->value = $value;
+            $this->metaData[$key]->{$this->getValueColumnName()} = $value;
 
             return $this->metaData[$key];
         }
 
         return $this->metaData[$key] = $this->getModelStub([
-            'key'   => $key,
-            'value' => $value,
+            $this->getKeyColumnName()   => $key,
+            $this->getValueColumnName() => $value,
         ]);
     }
 
@@ -114,7 +114,7 @@ trait Metable
 
     // Returns either the default value or null if default isn't set
     private function getMetaDefaultValue($key) {
-          if(isset($this->defaultMetaValues) && array_key_exists($key, $this->defaultMetaValues)) {
+        if(isset($this->defaultMetaValues) && array_key_exists($key, $this->defaultMetaValues)) {
             return $this->defaultMetaValues[$key];
         } else {
             return null;
@@ -129,7 +129,7 @@ trait Metable
             return;
         }
 
-        return ($raw) ? $meta : $meta->value;
+        return ($raw) ? $meta : $meta->meta_value;
     }
 
     protected function getMetaArray($keys, $raw = false)
@@ -137,8 +137,8 @@ trait Metable
         $collection = new BaseCollection();
 
         foreach ($this->metaData as $meta) {
-            if (!$meta->isMarkedForDeletion() && in_array($meta->key, $keys)) {
-                $collection->put($meta->key, $raw ? $meta : $meta->value);
+            if (!$meta->isMarkedForDeletion() && in_array($meta->{$this->getKeyColumnName()}, $keys)) {
+                $collection->put($meta->{$this->getKeyColumnName()}, $raw ? $meta : $meta->{$this->getValueColumnName()});
             }
         }
 
@@ -153,7 +153,7 @@ trait Metable
 
         foreach ($this->metaData as $meta) {
             if (!$meta->isMarkedForDeletion()) {
-                $collection->put($meta->key, $raw ? $meta : $meta->value);
+                $collection->put($meta->{$this->getKeyColumnName()}, $raw ? $meta : $meta->{$this->getValueColumnName()});
             }
         }
 
@@ -231,6 +231,14 @@ trait Metable
         }
     }
 
+    public function getKeyColumnName() {
+        return isset($this->key_column_name) ? $this->key_column_name : 'key';
+    }
+
+    public function getValueColumnName() {
+        return isset($this->value_column_name) ? $this->value_column_name : 'value';
+    }
+
     protected function getMetaData()
     {
         if (!isset($this->metaLoaded)) {
@@ -239,11 +247,11 @@ trait Metable
             if ($this->exists) {
                 $objects = $this->metas
                     ->where($this->metaKeyName, $this->modelKey);
-
+                    
                 if (!is_null($objects)) {
                     $this->metaLoaded = true;
 
-                    return $this->metaData = $objects->keyBy('key');
+                    return $this->metaData = $objects->keyBy($this->getKeyColumnName());
                 }
             }
             $this->metaLoaded = true;
@@ -433,7 +441,7 @@ trait Metable
                 $this->metaData[$key]->markForDeletion();
                 return;
             }*/
-            $this->metaData[$key]->value = $value;
+            $this->metaData[$key]->{$this->getValueColumnName()} = $value;
 
             return;
         }
