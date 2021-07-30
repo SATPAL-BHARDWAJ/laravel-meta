@@ -128,8 +128,7 @@ trait Metable
         if (is_null($meta) || $meta->isMarkedForDeletion()) {
             return;
         }
-
-        return ($raw) ? $meta : $meta->{$this->getValueColumnName()};
+        return ($raw) ? $meta : ($meta->{$this->getPrimaryValueColumnName()} ?? $meta->{$this->getValueColumnName()});
     }
 
     protected function getMetaArray($keys, $raw = false)
@@ -138,7 +137,7 @@ trait Metable
 
         foreach ($this->metaData as $meta) {
             if (!$meta->isMarkedForDeletion() && in_array($meta->{$this->getKeyColumnName()}, $keys)) {
-                $collection->put($meta->{$this->getKeyColumnName()}, $raw ? $meta : $meta->{$this->getValueColumnName()});
+                $collection->put($meta->{$this->getKeyColumnName()}, $raw ? $meta : ($meta->{$this->getPrimaryValueColumnName()} ?? $meta->{$this->getValueColumnName()}) );
             }
         }
 
@@ -153,7 +152,7 @@ trait Metable
 
         foreach ($this->metaData as $meta) {
             if (!$meta->isMarkedForDeletion()) {
-                $collection->put($meta->{$this->getKeyColumnName()}, $raw ? $meta : $meta->{$this->getValueColumnName()});
+                $collection->put($meta->{$this->getKeyColumnName()}, $raw ? $meta : ($meta->{$this->getPrimaryValueColumnName()} ?? $meta->{$this->getValueColumnName()}) );
             }
         }
 
@@ -239,6 +238,10 @@ trait Metable
         return isset($this->value_column_name) ? $this->value_column_name : 'value';
     }
 
+    public function getPrimaryValueColumnName() {
+        return isset($this->primary_value_column_name) ? $this->primary_value_column_name : $this->getValueColumnName();
+    }
+
     protected function getMetaData()
     {
         if (!isset($this->metaLoaded)) {
@@ -250,7 +253,6 @@ trait Metable
                     
                 if (!is_null($objects)) {
                     $this->metaLoaded = true;
-
                     return $this->metaData = $objects->keyBy($this->getKeyColumnName());
                 }
             }
